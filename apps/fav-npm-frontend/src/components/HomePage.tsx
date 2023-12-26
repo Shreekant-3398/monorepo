@@ -1,5 +1,5 @@
 import { useState, FC } from "react";
-import { ReuseButton , ReuseLabel, ReuseInputBox} from "@repo/ui";
+import { ReuseButton, ReuseLabel, ReuseInputBox } from "@repo/ui";
 import { useThrottle } from "./throttle";
 
 interface Favorite {
@@ -13,85 +13,83 @@ const Homepage: FC = () => {
   const [selectPKG, setSelectPKG] = useState<string>("");
   const [favReason, setFavReason] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
-  const [showConfirmationModal, setShowConfirmationModal] = useState<boolean>(false);
+  const [showConfirmationModal, setShowConfirmationModal] =
+    useState<boolean>(false);
 
-  const handleSubmit = async (): Promise<void> => {
+  const handleSubmit = (): void => {
     // Validate if a package is selected
     if (!selectPKG) {
       setErrorMessage("Please select a package from the list.");
       return;
     }
-  
+
     // Validate if a reason is provided
     if (!favReason.trim()) {
       setErrorMessage("Please enter a reason why this is your favorite.");
       return;
     }
-  
     // Reset error message
     setErrorMessage("");
-  console.log(selectPKG,"select")
     // Create the data object to send in the request body
-    const data = {
-      name: selectPKG,
-      description: favReason
-    };
-  
-    try {
-      const response = await fetch("http://localhost:3000/add-fav-packages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(data)
-      });
-  
-      if (response.ok) {
-        await response.json();
-        setShowConfirmationModal(true)
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to add package.");
-      }
-    } catch (error) {
-      console.error("Error adding package:", error);
-      alert("Failed to add package. Please try again.");
-    }
+
+    setShowConfirmationModal(true);
   };
 
   const handleQueryChange = (value: string) => {
     setQuery(value);
   };
 
-  const handleConfirmation = (confirmed: boolean): void => {
+  const handleConfirmation = async (confirmed: boolean): Promise<void> => {
     // Hide the confirmation modal
-    setShowConfirmationModal(false);
+
+    const data: Favorite = {
+      name: selectPKG,
+      description: favReason,
+    };
 
     // If user clicks "Yes," add the selected package to favorites
     if (confirmed) {
-      // Get existing favorites from localStorage or initialize an empty array
-      
-      const existingFavorites: Favorite[] = JSON.parse(localStorage.getItem("favorites") || "[]");
+      try {
+        const response = await fetch("http://localhost:3000/fav-packages", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        });
 
-      // Add the selected package and reason to the array
-      const newFavorite: Favorite = {
-        name: selectPKG,
-        description: favReason,
-      };
+        if (response.ok) {
+          const ch = await response.json();
 
-      // Push the newFavorite object to the existing array
-      existingFavorites.push(newFavorite);
-
-      // Store the updated array in localStorage
-      localStorage.setItem("favorites", JSON.stringify(existingFavorites));
-
+          if (ch.result === "Package already added in favourites") {
+            alert("This package is already in favorites.");
+            setShowConfirmationModal(false);
+            return;
+          }
+        } else {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Failed to add package.");
+        }
+      } catch (error) {
+        console.error("Error adding package:", error);
+        alert("Failed to add package. Please try again.");
+      }
       alert("Package added to favorites!");
+      setQuery("");
+      setSelectPKG("");
+      setFavReason("");
     }
+    setShowConfirmationModal(false);
   };
 
   return (
     <div className="w-4/5 m-auto">
-      <strong><ReuseLabel classname="block mb-1 text-left" text={"Search For NPM Packages"} /></strong>
+      <strong>
+        <ReuseLabel
+          classname="block mb-1 text-left"
+          text={"Search For NPM Packages"}
+        />
+      </strong>
       <ReuseInputBox
         type="text"
         name=""
@@ -101,7 +99,9 @@ const Homepage: FC = () => {
         handleChange={handleQueryChange}
       />
       <br />
-      <strong><ReuseLabel classname="block mb-1 text-left" text={"Results"} /></strong>
+      <strong>
+        <ReuseLabel classname="block mb-1 text-left" text={"Results"} />
+      </strong>
       <div className="h-52 overflow-y-auto text-left">
         {throttle?.map((pkg, i) => (
           <label key={i} className="block mb-2.5">
@@ -119,7 +119,12 @@ const Homepage: FC = () => {
       </div>
       <br />
       <br />
-      <strong><ReuseLabel classname="block mb-1 text-left" text={"why is this your Fav?"} /></strong>
+      <strong>
+        <ReuseLabel
+          classname="block mb-1 text-left"
+          text={"why is this your Fav?"}
+        />
+      </strong>
       <textarea
         rows={4}
         cols={50}
@@ -130,13 +135,13 @@ const Homepage: FC = () => {
       />
       {errorMessage && <p className="text-red-500">{errorMessage}</p>}
       <div className="flex justify-end mt-5">
-      <ReuseButton
-        classname={
-          "w-1/7 bg-violet-600 hover:bg-blue-300 px-3 py-1 border-0 rounded text-white"
-        }
-        text={"Submit"}
-        handleSubmit={handleSubmit}
-      />
+        <ReuseButton
+          classname={
+            "w-1/7 bg-violet-600 hover:bg-blue-300 px-3 py-1 border-0 rounded text-white"
+          }
+          text={"Submit"}
+          handleSubmit={handleSubmit}
+        />
       </div>
 
       {/* Confirmation Modal */}

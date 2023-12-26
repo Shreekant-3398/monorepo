@@ -50,7 +50,7 @@ const Favourite: FC = () => {
     const itemToDelete = favorites[index];
     setShowDeleteConfirmation(true);
 
-    fetch(`http://localhost:3000/fav-packages-delete/${itemToDelete.uuid}`, {
+    fetch(`http://localhost:3000/fav-packages/${itemToDelete.uuid}`, {
       method: "DELETE",
     })
       .then(() => {
@@ -89,7 +89,7 @@ const Favourite: FC = () => {
 
     const favoriteToUpdate = updatedFavorites[index];
     fetch(
-      `http://localhost:3000/fav-packages-update/${favoriteToUpdate.uuid}`,
+      `http://localhost:3000/fav-packages/${favoriteToUpdate.uuid}`,
       {
         method: "PUT",
         headers: {
