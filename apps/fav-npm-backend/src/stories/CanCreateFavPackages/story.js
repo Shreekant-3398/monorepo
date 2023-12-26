@@ -17,7 +17,7 @@ const prepare = ({ reqQuery, reqBody, reqParams }) => {
 };
 
 const authorize = ({ prepareResult }) => {
-  return true;
+  return false;
 };
 
 const handle = async ({ prepareResult, storyName }) => {
