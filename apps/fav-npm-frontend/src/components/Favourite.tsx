@@ -1,10 +1,20 @@
 import { useState, useEffect, FC } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEdit, faTrash, faEye, faEyeSlash, faCheck, faTimes } from "@fortawesome/free-solid-svg-icons";
+import {
+  faEdit,
+  faTrash,
+  faEye,
+  faEyeSlash,
+  faCheck,
+  faTimes,
+} from "@fortawesome/free-solid-svg-icons";
 import { ReuseButton } from "@repo/ui";
 import { useNavigate } from "react-router-dom";
 
 interface FavoriteItem {
+  uuid: number;
+  description: string;
+  name: string;
   result: string;
   reason: string;
   isVisible: boolean;
@@ -13,21 +23,48 @@ interface FavoriteItem {
 
 const Favourite: FC = () => {
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
-  const [_,setEditingIndex] = useState<number | null>(null);
+  const [_, setEditingIndex] = useState<number | null>(null);
   const [updatedReason, setUpdatedReason] = useState<string>("");
-  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] =
+    useState<boolean>(false);
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const storedFavorites: FavoriteItem[] = JSON.parse(localStorage.getItem("favorites") || "[]");
-    const favoritesWithFeatures = storedFavorites.map(fav => ({ ...fav, isVisible: false, isEditing: false }));
-    setFavorites(favoritesWithFeatures);
+    fetch("http://localhost:3000") // Replace with your server endpoint
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        setFavorites(data.result);
+      })
+      .catch((error) => {
+        console.error("Error fetching favorites:", error);
+      });
   }, []);
 
   const handleDelete = (index: number): void => {
-    setDeleteIndex(index);
+    const itemToDelete = favorites[index];
     setShowDeleteConfirmation(true);
+
+    fetch(`http://localhost:3000/fav-packages-delete/${itemToDelete.uuid}`, {
+      method: "DELETE",
+    })
+      .then(() => {
+        const updatedFavorites = [...favorites];
+        updatedFavorites.splice(index, 1);
+        setFavorites(updatedFavorites);
+      })
+      .catch((error) => {
+        console.error("Error deleting favorite:", error);
+      });
+
+    // Display the confirmation modal after initiating the delete
+    setShowDeleteConfirmation(true);
+    setDeleteIndex(index);
   };
 
   const handleToggleVisibility = (index: number): void => {
@@ -38,7 +75,7 @@ const Favourite: FC = () => {
 
   const handleToggleEditing = (index: number): void => {
     setEditingIndex(index);
-    setUpdatedReason(favorites[index].reason);
+    setUpdatedReason(favorites[index].description);
     const updatedFavorites = [...favorites];
     updatedFavorites[index].isEditing = !updatedFavorites[index].isEditing;
     setFavorites(updatedFavorites);
@@ -46,9 +83,34 @@ const Favourite: FC = () => {
 
   const handleEditConfirm = (index: number): void => {
     const updatedFavorites = [...favorites];
-    updatedFavorites[index].reason = updatedReason;
+    updatedFavorites[index].description = updatedReason;
     updatedFavorites[index].isEditing = false;
     setFavorites(updatedFavorites);
+
+    const favoriteToUpdate = updatedFavorites[index];
+    fetch(
+      `http://localhost:3000/fav-packages-update/${favoriteToUpdate.uuid}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(favoriteToUpdate),
+      }
+    )
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        console.log("Updated data from backend:", data);
+      })
+      .catch((error) => {
+        console.error("Error updating favorite:", error);
+      });
+
     localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
     setEditingIndex(null);
   };
@@ -62,17 +124,18 @@ const Favourite: FC = () => {
 
   const handleConfirmation = (confirmed: boolean): void => {
     setShowDeleteConfirmation(false);
-    if (confirmed) {
+
+    if (confirmed && deleteIndex !== null) {
+      // Make sure the deleteIndex is valid before proceeding
       const updatedFavorites = [...favorites];
-      updatedFavorites.splice(deleteIndex!, 1);
+      updatedFavorites.splice(deleteIndex, 1);
       setFavorites(updatedFavorites);
       localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
-      setShowDeleteConfirmation(false);
       alert("Package deleted successfully");
-    } else {
-      setShowDeleteConfirmation(false);
-      setDeleteIndex(null);
     }
+
+    // Reset the deleteIndex
+    setDeleteIndex(null);
   };
 
   const handleSubmit = (): void => {
@@ -93,12 +156,19 @@ const Favourite: FC = () => {
       </div>
       <ul className="border border-black w-80% m-16 py-1 w-4/5 mx-auto">
         <div className="flex justify-around">
-          <li><strong>Package name</strong></li>
-          <li><strong>Actions</strong></li>
+          <li>
+            <strong>Package name</strong>
+          </li>
+          <li>
+            <strong>Actions</strong>
+          </li>
         </div>
         {favorites.map((fav, index) => (
-          <li key={index} className="flex items-center justify-between border-b border-gray-300 p-4">
-            <span className="max-w-sm mx-64">{fav.result}</span>
+          <li
+            key={index}
+            className="flex items-center justify-between border-b border-gray-300 p-4"
+          >
+            <span className="max-w-sm mx-64">{fav.name}</span>
             <div className="flex items-center justify-end space-x-4 border mx-56 gap-2">
               <FontAwesomeIcon
                 icon={fav.isVisible ? faEyeSlash : faEye}
@@ -108,20 +178,26 @@ const Favourite: FC = () => {
               />
               <FontAwesomeIcon
                 icon={fav.isEditing ? faCheck : faEdit}
-                onClick={() => (fav.isEditing ? handleEditConfirm(index) : handleToggleEditing(index))}
+                onClick={() =>
+                  fav.isEditing
+                    ? handleEditConfirm(index)
+                    : handleToggleEditing(index)
+                }
                 className="cursor-pointer"
                 title={fav.isEditing ? "Confirm Edit" : "Edit Reason"}
               />
               <FontAwesomeIcon
                 icon={fav.isEditing ? faTimes : faTrash}
-                onClick={() => (fav.isEditing ? handleEditCancel(index) : handleDelete(index))}
+                onClick={() =>
+                  fav.isEditing ? handleEditCancel(index) : handleDelete(index)
+                }
                 className="cursor-pointer"
                 title={fav.isEditing ? "Cancel Edit" : "Delete"}
               />
             </div>
             {fav.isVisible && (
               <div className="absolute left-1/4 mt-2 p-2 mx-80 bg-white border border-gray-300 rounded-md">
-                <strong>Fav Reason:</strong> {fav.reason}
+                <strong>Fav Reason:</strong> {fav.description}
               </div>
             )}
             {fav.isEditing && (
@@ -140,7 +216,9 @@ const Favourite: FC = () => {
       {showDeleteConfirmation && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded shadow-md">
-            <p className="mb-4">Are you sure you want to delete this package?</p>
+            <p className="mb-4">
+              Are you sure you want to delete this package?
+            </p>
             <div className="flex justify-between">
               <ReuseButton
                 text="Yes"

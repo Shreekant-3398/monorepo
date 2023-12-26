@@ -3,8 +3,8 @@ import { ReuseButton , ReuseLabel, ReuseInputBox} from "@repo/ui";
 import { useThrottle } from "./throttle";
 
 interface Favorite {
-  result: string;
-  reason: string;
+  name: string;
+  description: string;
 }
 
 const Homepage: FC = () => {
@@ -15,24 +15,48 @@ const Homepage: FC = () => {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [showConfirmationModal, setShowConfirmationModal] = useState<boolean>(false);
 
-  const handleSubmit = (): void => {
+  const handleSubmit = async (): Promise<void> => {
     // Validate if a package is selected
     if (!selectPKG) {
       setErrorMessage("Please select a package from the list.");
       return;
     }
-
+  
     // Validate if a reason is provided
     if (!favReason.trim()) {
       setErrorMessage("Please enter a reason why this is your favorite.");
       return;
     }
-
+  
     // Reset error message
     setErrorMessage("");
-
-    // Show confirmation modal
-    setShowConfirmationModal(true);
+  console.log(selectPKG,"select")
+    // Create the data object to send in the request body
+    const data = {
+      name: selectPKG,
+      description: favReason
+    };
+  
+    try {
+      const response = await fetch("http://localhost:3000/add-fav-packages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      });
+  
+      if (response.ok) {
+        await response.json();
+        setShowConfirmationModal(true)
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to add package.");
+      }
+    } catch (error) {
+      console.error("Error adding package:", error);
+      alert("Failed to add package. Please try again.");
+    }
   };
 
   const handleQueryChange = (value: string) => {
@@ -46,12 +70,13 @@ const Homepage: FC = () => {
     // If user clicks "Yes," add the selected package to favorites
     if (confirmed) {
       // Get existing favorites from localStorage or initialize an empty array
+      
       const existingFavorites: Favorite[] = JSON.parse(localStorage.getItem("favorites") || "[]");
 
       // Add the selected package and reason to the array
       const newFavorite: Favorite = {
-        result: selectPKG,
-        reason: favReason,
+        name: selectPKG,
+        description: favReason,
       };
 
       // Push the newFavorite object to the existing array
