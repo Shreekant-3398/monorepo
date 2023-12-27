@@ -1,0 +1,27 @@
+{
+  "name": "@repo/components",
+  "version": "0.0.0",
+  "private": true,
+  "main": "index.ts",
+  "scripts": {
+    "lint": "eslint . --max-warnings 0",
+    "generate:component": "turbo gen react-component"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "*",
+    "@repo/typescript-config": "*",
+    "@turbo/gen": "^1.10.12",
+    "@types/eslint": "^8.44.7",
+    "@types/node": "^20.5.2",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "eslint": "^8.53.0",
+    "react": "^18.2.0",
+    "typescript": "^5.2.2",
+    "@repo/ui":"*"
+  },
+  "dependencies": {
+    "@locoworks/reusejs-react-button": "^1.0.0",
+    "@locoworks/reusejs-react-input": "^0.1.3"
+  }
+}
