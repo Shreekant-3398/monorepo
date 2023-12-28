@@ -11,9 +11,10 @@ module.exports = (app) => {
     {
       endpoints: [
         ["get", "/fav-packages", "CanGetFavPackages"],
+        ["get", "/fav-packages/:id", "CanGetSingleFavPackage"],
         ["post", "/fav-packages", "CanCreateFavPackages"],
-        ["put","/fav-packages/:id","CanUpdateFavPackages"],
-        ["delete","/fav-packages/:id","CanDeleteFavPackages"]
+        ["put", "/fav-packages/:id", "CanUpdateFavPackages"],
+        ["delete", "/fav-packages/:id", "CanDeleteFavPackages"],
       ],
     },
   ];

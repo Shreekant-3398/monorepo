@@ -7,7 +7,6 @@ module.exports = function (app) {
   const apis = endpoints(app);
   apis.forEach((api) => {
     api.endpoints.forEach((endpoint, i) => {
-      // console.log("endpoint", endpoint);
 
       let apiPath = generateApiPath(api, endpoint);
 

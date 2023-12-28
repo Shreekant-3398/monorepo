@@ -10,11 +10,21 @@ const addCreatedTimestamps = (payload) => {
 
 const create = async (table, payload) => {
   try {
+    const existingPackage = await knex("fav_npm_1")
+      .where("name", payload.name)
+      .first();
     payload = addCreatedTimestamps(payload);
+
     let result = await knex.transaction(async (trx) => {
       if (process.env.DB_DIALECT === "pg") {
-        const rows = await trx(table).insert(payload).returning("*");
-        return rows[0];
+        if (existingPackage) {
+          return {
+            result: "Package already added in favourites",
+          };
+        } else {
+          const rows = await trx(table).insert(payload).returning("*");
+          return rows[0];
+        }
       } else {
         const rows = await trx(table).insert(payload);
         return rows[0];
@@ -27,7 +37,9 @@ const create = async (table, payload) => {
 };
 
 const update = async (table, where, payload) => {
+  console.log(table, where, payload, "!!!!!!!!!");
   try {
+    console.log(table, where, payload, "inside try!!!");
     if (process.env.DB_DIALECT === "pg") {
       payload["updated_at"] = new Date().toISOString();
       let rows = await knex(table)
@@ -102,6 +114,21 @@ const first = async (table, where = {}, throwNotFound = false) => {
   }
 };
 
+const getPackage = async (table, where, column) => {
+  
+  try {
+    if (process.env.DB_DIALECT === "pg") {
+      let rows = await knex(table)
+        .where(where)
+        .whereNull("deleted_at")
+        .select(column);
+      return rows.length ? rows[0] : null;
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
 const countAll = async (table, where = {}, whereNot = {}) => {
   try {
     let rows = await knex(table)
@@ -136,5 +163,6 @@ module.exports = {
   first,
   findAll,
   countAll,
+  getPackage,
   knex,
 };

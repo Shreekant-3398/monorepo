@@ -9,8 +9,7 @@ server.listen(
       console.log(err);
       process.exit(1);
     } else{
-      console.log(`server running on 3000`)
+      console.log(`server running on 3000`);
     }
   }
-  
 );

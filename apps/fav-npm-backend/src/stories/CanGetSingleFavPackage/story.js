@@ -2,9 +2,7 @@ const baseRepo = requireUtil("baseRepo");
 const tablename = "fav_npm_1";
 
 const prepare = ({ reqQuery, reqBody, reqParams }) => {
-  const name = reqBody.name;
-  const desc = reqBody.description;
-  return { name, desc };
+  return {uuid:reqParams.id};
 };
 
 const authorize = ({ prepareResult }) => {
@@ -12,15 +10,14 @@ const authorize = ({ prepareResult }) => {
 };
 
 const handle = async ({ prepareResult, storyName }) => {
-  const { name, desc } = prepareResult;
-
-  if (!name || !desc) {
-    throw new Error("Package name or description is missing");
+const {uuid}= prepareResult;
+  try {
+    console.log("prep",prepareResult)
+    return await baseRepo.getPackage(tablename,{ uuid },"description");
+  } catch (err) {
+    console.error('Error fetching packages:', err);
+    throw err;
   }
-  return await baseRepo.create(tablename, {
-    name: name,
-    description: desc,
-  });
 };
 
 const respond = ({ handleResult }) => {
