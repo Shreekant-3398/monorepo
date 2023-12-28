@@ -1,49 +1,27 @@
-require("dotenv").config();
-
-const knex = require("knex")({
-  client: "pg",
-  connection: {
-    host: process.env.DB_HOST,
-    user: process.env.DB_USERNAME,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    port: process.env.DB_PORT,
-  },
-});
+const baseRepo = requireUtil("baseRepo");
+const tablename = "fav_npm_1";
 
 const prepare = ({ reqQuery, reqBody, reqParams }) => {
-  // console.log("check for the payload", reqBody);
-  return reqBody;
+  const name = reqBody.name;
+  const desc = reqBody.description;
+  return { name, desc };
 };
 
 const authorize = ({ prepareResult }) => {
-  return false;
+  return true;
 };
 
 const handle = async ({ prepareResult, storyName }) => {
-  const name = prepareResult.name;
-  const desc = prepareResult.description;
+  const { name, desc } = prepareResult;
 
   if (!name || !desc) {
     throw new Error("Package name or description is missing");
   }
-
-  // Check if the package name already exists
-  const existingPackage = await knex("fav_npm_1").where("name", name).first();
-  if (existingPackage) {
-    return {
-      result: "Package already added in favourites",
-    };
-  } else {
-    await knex("fav_npm_1").insert({
-      name: name,
-      description: desc,
-    });
-
-    return {
-      result: `Package created with Package_name as ${name} and Package_desc as ${desc}`,
-    };
-  }
+  let table = await baseRepo.create(tablename, {
+    name: name,
+    description: desc,
+  });
+  return table;
 };
 
 const respond = ({ handleResult }) => {

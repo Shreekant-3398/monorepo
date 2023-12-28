@@ -1,15 +1,6 @@
-require('dotenv').config();
+const baseRepo = requireUtil("baseRepo");
+const tablename = "fav_npm_1";
 
-const knex = require('knex')({
-  client: 'pg',
-  connection: {
-    host : process.env.DB_HOST,
-    user : process.env.DB_USERNAME,
-    password : process.env.DB_PASSWORD,
-    database : process.env.DB_NAME,
-    port:process.env.DB_PORT
-  }
-});
 const prepare = ({ reqQuery, reqBody, reqParams }) => {
   return {};
 };
@@ -20,10 +11,7 @@ const authorize = ({ prepareResult }) => {
 
 const handle = async ({ prepareResult, storyName }) => {
   try {
-    const packages = await knex('fav_npm_1').select('*');
-    return {
-      result: packages,
-    };
+    return await baseRepo.findAll(tablename);
   } catch (err) {
     console.error('Error fetching packages:', err);
     throw err;

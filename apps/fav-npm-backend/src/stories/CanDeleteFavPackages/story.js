@@ -1,15 +1,5 @@
-require('dotenv').config();
-
-const knex = require('knex')({
-  client: 'pg',
-  connection: {
-    host: process.env.DB_HOST,
-    user: process.env.DB_USERNAME,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    port: process.env.DB_PORT
-  }
-});
+const baseRepo = requireUtil("baseRepo");
+const tablename = "fav_npm_1";
 
 const prepare = ({ reqQuery, reqBody, reqParams }) => {
   return {
@@ -31,13 +21,7 @@ const handle = async ({ prepareResult, storyName }) => {
     }
 
     // Delete all records in the fav_npm table with the specified uuid
-    await knex('fav_npm_1')
-      .where({ uuid: uuid }) // Filter records by uuid
-      .del(); // Delete the records
-
-    return {
-      result: `Deleted all records with UUID ${uuid}`
-    };
+    return await baseRepo.remove(tablename,{uuid})
   } catch (err) {
     console.error('Error deleting records:', err);
     throw err;
