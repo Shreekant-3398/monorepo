@@ -45,7 +45,7 @@ module.exports = () => {
     loadEndpoints: "./core/loadEndpoints",
     validator: "./core/validator",
     endpoints: "./src/endpoints",
-    excludeFromAuth: ["GET /fav-packages","GET /fav-packages/:id", "POST /fav-packages","PUT /fav-packages/:id","DELETE /fav-packages/:id"],
+    excludeFromAuth: ["GET /fav-packages","GET /fav-packages/:id", "POST /user","POST /fav-packages","PUT /fav-packages/:id","DELETE /fav-packages/:id"],
     enableCORS: true,
     responseKey: "respondResult",
   };

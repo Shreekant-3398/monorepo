@@ -10,8 +10,8 @@ const addCreatedTimestamps = (payload) => {
 
 const create = async (table, payload) => {
   try {
-    const existingPackage = await knex("fav_npm_1")
-      .where("name", payload.name)
+    const existingPackage = await knex(table)
+      .where("name",payload.name)
       .first();
     payload = addCreatedTimestamps(payload);
 
@@ -20,6 +20,34 @@ const create = async (table, payload) => {
         if (existingPackage) {
           return {
             result: "Package already added in favourites",
+          };
+        } else {
+          const rows = await trx(table).insert(payload).returning("*");
+          return rows[0];
+        }
+      } else {
+        const rows = await trx(table).insert(payload);
+        return rows[0];
+      }
+    });
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const createUser = async (table, payload) => {
+  try {
+    const existingPackage = await knex(table)
+      .where("username",payload.username)
+      .first();
+    payload = addCreatedTimestamps(payload);
+
+    let result = await knex.transaction(async (trx) => {
+      if (process.env.DB_DIALECT === "pg") {
+        if (existingPackage) {
+          return {
+            result: "User already registered",
           };
         } else {
           const rows = await trx(table).insert(payload).returning("*");
@@ -164,5 +192,6 @@ module.exports = {
   findAll,
   countAll,
   getPackage,
+  createUser,
   knex,
 };

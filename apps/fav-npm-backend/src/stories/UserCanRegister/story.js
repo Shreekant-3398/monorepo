@@ -1,5 +1,11 @@
+const baseRepo = requireUtil("baseRepo");
+const tablename = "users";
+
 const prepare = ({ reqQuery, reqBody, reqParams, req }) => {
-  return {};
+  const username= reqBody.username;
+  const password_hash= reqBody.password_hash;
+
+  return {username,password_hash};
 };
 
 const authorize = async ({ prepareResult }) => {
@@ -18,8 +24,13 @@ const authorize = async ({ prepareResult }) => {
 };
 
 const handle = async ({ prepareResult, authorizeResult }) => {
+  const { username, password_hash } = prepareResult;
+
+  if (!username || !password_hash) {
+    throw new Error("username or password is missing");
+  }
   try {
-    return {};
+    return await baseRepo.createUser(tablename,prepareResult);
   } catch (error) {
     throw error;
   }
